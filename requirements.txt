@@ -1,0 +1,5 @@
+pytumblr
+requests
+yaml
+beautifulsoup4
+lxml
