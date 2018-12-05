@@ -191,9 +191,12 @@ class TumblrDownloader:
 
             else:
                 logging.info('Download | {0} | {1}'.format(file_name, url))
-                with open(os.path.join(self.download_folder, file_name), 'wb') as f:
-                    f.write(r.content)
+                self._save(file_name, r.content)
                 return True
+
+    def _save(self, file_name, content):
+        with open(os.path.join(self.download_folder, file_name), 'wb') as f:
+            f.write(content)
 
 
 class TumblrClient:
