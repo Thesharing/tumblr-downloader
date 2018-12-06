@@ -58,16 +58,17 @@ class TumblrDownloader:
         # Scan files in the download folder
         self.names = BlogName(self.download_folder)
 
-    def download_likes(self, start=0):
+    def download_likes(self, start=0, max_page=50):
         """
         Download all the posts you liked
         :param start: optional, the page number to start, default is 0
+        :param max_page: optional, limit the max page number, in case it take too much time downloading one blog
         """
         count = 0
         total = self.user_info['likes']
         logging.info('Likes | {0} ongoing'.format(total))
 
-        for page in range(start, ceil(total / 20)):
+        for page in range(start, min(ceil(total / 20), max_page)):
             logging.info('Downloading page {0}'.format(page))
 
             for post in self.client.likes(limit=20, offset=page * 20)['liked_posts']:
@@ -84,16 +85,17 @@ class TumblrDownloader:
 
         logging.info('Likes | {0} / {1} downloaded'.format(count, total))
 
-    def download_following(self, start=0):
+    def download_following(self, start=0, max_page=50):
         """
         Download all the posts in the blogs you are following
         :param start: optional, the page number to start, default is 0
+        :param max_page: optional, limit the max page number, in case it take too much time downloading one blog
         """
         count = 0
         total = self.user_info['following']
         logging.info('Following | {0} blogs total'.format(total))
 
-        for page in range(start, ceil(total / 20)):
+        for page in range(start, min(ceil(total / 20), max_page)):
             logging.info('Following | Page {0} ongoing'.format(page))
 
             for blog in self.client.following(limit=20, offset=page * 20)['blogs']:
@@ -104,17 +106,18 @@ class TumblrDownloader:
 
         logging.info('Following | {0} / {1} blogs downloaded'.format(count, total))
 
-    def download_blog(self, blog_identifier, start=0):
+    def download_blog(self, blog_identifier, start=0, max_page=50):
         """
         Download all the posts in the blog you specified
         :param blog_identifier: name or url of the blog
         :param start: page number to start
+        :param max_page: optional, limit the max page number, in case it take too much time downloading one blog
         """
         count = 0
         total = self.client.posts(blogname=blog_identifier)['total_posts']
         logging.info('Blog | {0} posts total'.format(total))
 
-        for page in range(start, ceil(total / 20)):
+        for page in range(start, min(ceil(total / 20), max_page)):
             logging.info('Blog | Page {0} ongoing'.format(page))
 
             for post in self.client.posts(blogname=blog_identifier, limit=20, offset=page * 20)['posts']:

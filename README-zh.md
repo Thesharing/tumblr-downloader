@@ -48,7 +48,12 @@ pip install -i requirements.txt
 | download_following()                     | 下载所有关注的博客的帖文     |
 | download_blog(`name or url of the blog`) | 下载指定某一个博客的所有帖文 |
 
-如果不想下载转帖的帖文（即只下载原创帖文），可以设置`downloader.reblog = False`.
+* 每个方法都有两个可选参数：`start` 和 `max_page`，`start` 可以用于指定开始下载的页码，可以用于断点续传；`max_page` 用于指定最大下载页数，避免下载单个博客时间过长. `max_page`不能大于50，这是由于Tumblr API进行了限制.
+
+  > When using the offset parameter the maximum limit on the offset is 1000. If you would like to get more results than that use either before or after.
+
+- `download_blog` 的参数为Blog的URL或名称，以Support博客为例，在这里应当填入 `support` 或者 `support.tumblr.com`.
+- 如果不想下载转帖的帖文（即只下载原创帖文），可以设置`downloader.reblog = False`.
 
 4. 运行 `python main.py` ，如果是第一次运行的话需要进行授权操作. 
    1. 首先输入 OAuth Consumer Key 和 Secret Key.
