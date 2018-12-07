@@ -55,20 +55,25 @@ class TumblrDownloader:
         if not os.path.isdir(self.download_folder):
             os.mkdir(self.download_folder)
 
-        # Scan files in the download folder
-        self.names = BlogName(self.download_folder)
-
-    def download_likes(self, start=0, max_page=50):
+    def download_likes(self, start_page=0, max_page=50):
         """
         Download all the posts you liked
-        :param start: optional, the page number to start, default is 0
+        :param start_page: optional, the page number to start, default is 0
         :param max_page: optional, limit the max page number, in case it take too much time downloading one blog
         """
+
+        # Create likes folder
+        download_path = os.path.join(self.download_folder, './likes')
+        if not os.path.isdir(download_path):
+            os.mkdir(download_path)
+
+        names = BlogName(download_path)
+
         count = 0
         total = self.user_info['likes']
         logging.info('Likes | {0} ongoing'.format(total))
 
-        for page in range(start, min(ceil(total / 20), max_page)):
+        for page in range(start_page, min(ceil(total / 20), max_page)):
             logging.info('Downloading page {0}'.format(page))
 
             for post in self.client.likes(limit=20, offset=page * 20)['liked_posts']:
@@ -79,26 +84,37 @@ class TumblrDownloader:
                 else:
                     logging.info('Likes | Start post {0} | {1}'.format(post['blog_name'], post['post_url']))
 
-                    self._download_post(post)
+                    self._download_post(post=post, path=download_path, names=names)
 
                     count += 1
 
         logging.info('Likes | {0} / {1} downloaded'.format(count, total))
 
-    def download_following(self, start=0, max_page=50):
+    def download_following(self, start_page=0, max_page=50, start_blog=None):
         """
         Download all the posts in the blogs you are following
-        :param start: optional, the page number to start, default is 0
+        :param start_page: optional, the page number to start, default is 0
         :param max_page: optional, limit the max page number, in case it take too much time downloading one blog
+        :param start_blog: optional, the blog name to start
         """
         count = 0
         total = self.user_info['following']
         logging.info('Following | {0} blogs total'.format(total))
 
-        for page in range(start, min(ceil(total / 20), max_page)):
+        start_flag = start_blog is None
+
+        for page in range(start_page, min(ceil(total / 20), max_page)):
             logging.info('Following | Page {0} ongoing'.format(page))
 
             for blog in self.client.following(limit=20, offset=page * 20)['blogs']:
+
+                # To start from a specified blog
+                if not start_flag:
+                    if blog['name'] == start_blog:
+                        start_flag = True
+                    else:
+                        continue
+
                 logging.info('Following | Start blog {0} | {1}'.format(blog['name'], blog['url']))
 
                 self.download_blog(blog['name'])
@@ -106,18 +122,24 @@ class TumblrDownloader:
 
         logging.info('Following | {0} / {1} blogs downloaded'.format(count, total))
 
-    def download_blog(self, blog_identifier, start=0, max_page=50):
+    def download_blog(self, blog_identifier, start_page=0, max_page=50):
         """
         Download all the posts in the blog you specified
         :param blog_identifier: name or url of the blog
-        :param start: page number to start
+        :param start_page: page number to start
         :param max_page: optional, limit the max page number, in case it take too much time downloading one blog
         """
+
+        # Create a blog folder
+        download_path = os.path.join(self.download_folder, blog_identifier)
+        if not os.path.isdir(download_path):
+            os.mkdir(download_path)
+
         count = 0
         total = self.client.posts(blogname=blog_identifier)['total_posts']
         logging.info('Blog | {0} posts total'.format(total))
 
-        for page in range(start, min(ceil(total / 20), max_page)):
+        for page in range(start_page, min(ceil(total / 20), max_page)):
             logging.info('Blog | Page {0} ongoing'.format(page))
 
             for post in self.client.posts(blogname=blog_identifier, limit=20, offset=page * 20)['posts']:
@@ -130,28 +152,38 @@ class TumblrDownloader:
                     logging.info('Blog | Start post {0} | {1}'.format(
                         post['post_url'].split('/')[-2], post['post_url']))
 
-                    self._download_post(post)
+                    self._download_post(post, download_path)
                     count += 1
 
         logging.info('Blog | {0} / {1} posts downloaded'.format(count, total))
 
-    def _download_post(self, post):
+    def _download_post(self, post, path, names=None):
         """
         Download the images and videos in one post
         :param post: a dict contains post info
+        :param path: the path of folder
+        :param names: to specify the file name
         """
         blog_name = post['blog_name']
 
         if post['type'] == 'photo':
             for photo in post['photos']:
-                file_name = self.names.get(blog_name, 'jpg')
-                if self._download_file(photo['original_size']['url'], file_name):
-                    self.names.inc(blog_name)
+                if names is None:
+                    file_name = photo['original_size']['url'].split('/')[-1]
+                    self._download_file(photo['original_size']['url'], os.path.join(path, file_name))
+                else:
+                    file_name = names.get(blog_name, 'jpg')
+                    if self._download_file(photo['original_size']['url'], os.path.join(path, file_name)):
+                        names.inc(blog_name)
 
         elif post['type'] == 'video':
-            file_name = self.names.get(blog_name, 'mp4')
-            if self._download_file(post['video_url'], file_name):
-                self.names.inc(blog_name)
+            if names is None:
+                file_name = post['video_url'].split('/')[-1]
+                self._download_file(post['video_url'], os.path.join(path, file_name))
+            else:
+                file_name = names.get(blog_name, 'mp4')
+                if self._download_file(post['video_url'], os.path.join(path, file_name)):
+                    names.inc(blog_name)
 
         elif post['type'] == 'text':
             raw = post['body']
@@ -159,46 +191,60 @@ class TumblrDownloader:
 
             # Find all images
             for img in soup.find_all('img'):
-                file_name = self.names.get(blog_name, 'jpg')
-                if self._download_file(img['src'].replace('_540', '_1280'), file_name):
-                    self.names.inc(blog_name)
-                elif self._download_file(img['src'], file_name):
-                    self.names.inc(blog_name)
+                if names is None:
+                    file_name = img['src'].split('/')[-1]
+                    if not self._download_file(img['src'].replace('_540', '_1280'), os.path.join(path, file_name)):
+                        self._download_file(img['src'], os.path.join(path, file_name))
+                else:
+                    file_name = names.get(blog_name, 'jpg')
+                    if self._download_file(img['src'].replace('_540', '_1280'), os.path.join(path, file_name)):
+                        names.inc(blog_name)
+                    elif self._download_file(img['src'], os.path.join(path, file_name)):
+                        names.inc(blog_name)
 
             # Find all videos
             for video in soup.find_all('source'):
-                file_name = self.names.get(blog_name, 'mp4')
-                if self._download_file(video['src'], file_name):
-                    self.names.inc(blog_name)
+                if names is None:
+                    file_name = video['src'].split('/')[-1]
+                    self._download_file(video['src'], os.path.join(path, file_name))
+                else:
+                    file_name = names.get(blog_name, 'mp4')
+                    if self._download_file(video['src'], os.path.join(path, file_name)):
+                        names.inc(blog_name)
 
-    def _download_file(self, url, file_name):
+    def _download_file(self, url, path):
         """
         Download the file and save it to local file
         :param url: url of the target data
-        :param file_name: name of the local file
+        :param path: name of the local file
         """
         while True:
             try:
                 r = requests.get(url, timeout=10)
             except RequestException:
-                logging.error('Error | {0} | {1}'.format(file_name, url))
+                logging.error('Error | {0} | {1}'.format(os.path.basename(path), url))
                 continue
 
             if r.status_code > 400:
-                logging.error('{0} | {1} | {2}'.format(r.status_code, file_name, url))
+                logging.error('{0} | {1} | {2}'.format(r.status_code, os.path.basename(path), url))
                 return False
 
             elif r.status_code != 200:
-                logging.warning('{0} | {1} | {2}'.format(r.status_code, file_name, url))
+                logging.warning('{0} | {1} | {2}'.format(r.status_code, os.path.basename(path), url))
                 continue
 
             else:
-                logging.info('Download | {0} | {1}'.format(file_name, url))
-                self._save(file_name, r.content)
+                logging.info('Download | {0} | {1}'.format(os.path.basename(path), url))
+                self._save(r.content, path)
                 return True
 
-    def _save(self, file_name, content):
-        with open(os.path.join(self.download_folder, file_name), 'wb') as f:
+    @staticmethod
+    def _save(content, path):
+        """
+        :param content: Content of file
+        :param path: Path of local file
+        """
+        with open(path, 'wb') as f:
             f.write(content)
 
 

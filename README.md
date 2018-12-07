@@ -47,9 +47,11 @@ Or install the requirements manually:
 | download_following()                     | Download all the posts in the blogs you are following |
 | download_blog(`name or url of the blog`) | Download all the posts in the blog you specified      |
 
-- The functions has two optional parameters: `start` and `max_page`. `start` is the page number to start; `max_page` is the max page number to download in case it takes too much time downloading one blog. `max_page` cannot be larger than 50, since downloader cannot access 50 and more pages via tumblr API. 
+- The functions has two optional parameters: `start_page` and `max_page`. `start_page` is the page number to start; `max_page` is the max page number to download in case it takes too much time downloading one blog. `max_page` cannot be larger than 50, since downloader cannot access 50 and more pages via tumblr API. 
 
   > When using the offset parameter the maximum limit on the offset is 1000. If you would like to get more results than that use either before or after.
+
+- `download_following` has another optional parameters: `start_blog`, which you can use it to specify which blog to start. This is useful when the script breaks down and you want to resume it.
 
 - the parameter of `download_blog` is the name or URL of the blog. Take [support](https://support.tumblr.com/) blog as an example, the blog name should be `support`, and the URL should be `support.tumblr.com`.
 
