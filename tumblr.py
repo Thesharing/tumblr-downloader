@@ -144,7 +144,7 @@ class TumblrDownloader:
 
             for post in self.client.posts(blogname=blog_identifier, limit=20, offset=page * 20)['posts']:
 
-                if len(post['trail']) > 1 and not self.reblog:
+                if 'trail' in post and len(post['trail']) > 1 and not self.reblog:
                     logging.info('Skip | Reblog post: {0} | {1}'.format(
                         post['post_url'].split('/')[-2], post['post_url']))
 
