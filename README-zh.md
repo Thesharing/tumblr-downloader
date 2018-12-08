@@ -13,7 +13,7 @@
 运行以下命令来安装依赖项：
 
 ```bash
-pip install -i requirements.txt
+pip install -r requirements.txt
 ```
 
 或者手动安装依赖项：
@@ -22,7 +22,7 @@ pip install -i requirements.txt
 | ---------------------------------------------- |
 | [pytumblr](https://github.com/tumblr/pytumblr) |
 | requests                                       |
-| yaml                                           |
+| pyyaml                                         |
 | beautifulsoup4                                 |
 | lxml                                           |
 

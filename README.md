@@ -13,7 +13,7 @@ Require Python >= 3.5, you can install the python from [official website](https:
 Install the requirement by: 
 
 ```bash
-pip install -i requirements.txt
+pip install -r requirements.txt
 ```
 
 Or install the requirements manually: 
@@ -22,7 +22,7 @@ Or install the requirements manually:
 | ---------------------------------------------- |
 | [pytumblr](https://github.com/tumblr/pytumblr) |
 | requests                                       |
-| yaml                                           |
+| pyyaml                                         |
 | beautifulsoup4                                 |
 | lxml                                           |
 

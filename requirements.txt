@@ -1,5 +1,5 @@
 pytumblr
 requests
-yaml
+pyyaml
 beautifulsoup4
 lxml
