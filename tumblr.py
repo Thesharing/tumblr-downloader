@@ -15,7 +15,7 @@ MAX_RETRY = 20
 
 class TumblrDownloader:
 
-    def __init__(self, reblog: bool = True, logging_level: str = 'INFO'):
+    def __init__(self, reblog: bool = True, redownload: bool = False, logging_level: str = 'INFO'):
         """
         :param reblog: Download the reblog posts or not
         :param logging_level: the level of logging information
@@ -25,6 +25,7 @@ class TumblrDownloader:
                             level=getattr(logging, logging_level))
 
         self.reblog = reblog
+        self.redownload = redownload
 
         # Get Token from file or interactive console
         yaml_path = '.tumblr'
@@ -218,6 +219,9 @@ class TumblrDownloader:
         :param url: url of the target data
         :param path: name of the local file
         """
+        if os.path.exists(path) and not self.redownload:
+            return True
+
         while True:
             try:
                 r = requests.get(url, timeout=10)

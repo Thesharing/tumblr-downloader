@@ -57,6 +57,8 @@ Or install the requirements manually:
 
 - Set the downloader to not download reblog posts by setting`downloader.reblog = False`.
 
+- Set the downloader to not download content that has already been downloaded, say from a previous run, by setting `downloader.redownload = False`.
+
 4. Run `python main.py` to start the first-time config, you will be redirected to a interactive console provided by pytumblr. 
    1. First input the OAuth Consumer Key and Secret Key you get before.
    2. The console will return <u>an authorize url</u> to authorize your own tumblr account to the downloader. Copy and paste it in web browser and visit it. The page will ask you to authorize. Allow it. Then the url will be redirected to another url, which contains the `oauth_verifier` token, copy and paste it back to the console.

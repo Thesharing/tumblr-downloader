@@ -4,6 +4,9 @@ if __name__ == '__main__':
     # Init a downloader
     d = TumblrDownloader()
 
+    # Do not download content already downloaded
+    d.redownload = False
+
     # Download all the posts you liked
     d.download_likes()
 
