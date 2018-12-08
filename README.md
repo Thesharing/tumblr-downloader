@@ -51,6 +51,8 @@ Or install the requirements manually:
 
   > When using the offset parameter the maximum limit on the offset is 1000. If you would like to get more results than that use either before or after.
 
+- `download_likes` has another optional parameter: `use_native_filenames`.  When False (default), the downloaded files are named for the blog that posted the liked file.  When True, the raw / native filename is used.
+
 - `download_following` has another optional parameters: `start_blog`, which you can use it to specify which blog to start. This is useful when the script breaks down and you want to resume it.
 
 - the parameter of `download_blog` is the name or URL of the blog. Take [support](https://support.tumblr.com/) blog as an example, the blog name should be `support`, and the URL should be `support.tumblr.com`.

@@ -56,7 +56,7 @@ class TumblrDownloader:
         if not os.path.isdir(self.download_folder):
             os.mkdir(self.download_folder)
 
-    def download_likes(self, start_page=0, max_page=50):
+    def download_likes(self, start_page=0, max_page=50, use_native_filenames=False):
         """
         Download all the posts you liked
         :param start_page: optional, the page number to start, default is 0
@@ -68,7 +68,7 @@ class TumblrDownloader:
         if not os.path.isdir(download_path):
             os.mkdir(download_path)
 
-        names = BlogName(download_path)
+        names = BlogName(download_path) if not use_native_filenames else None
 
         count = 0
         total = self.user_info['likes']
