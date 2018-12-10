@@ -74,6 +74,7 @@ class TumblrDownloader:
 
         page = 1
         postnum = 1
+        last_post_url = ''
         count = 0
         total = self.user_info['likes']
         logging.info('Likes | {0} ongoing'.format(total))
@@ -82,10 +83,11 @@ class TumblrDownloader:
             logging.info('Downloading page {0} before timestamp {1}'.format(page, last_timestamp))
 
             likes = self.client.likes(limit=20, before=last_timestamp+1)['liked_posts']
-            if len(likes) == 0:
-                break;
+            if len(likes) == 1 and last_post_url == likes[0]['post_url']:
+                break
 
             for post in likes:
+                last_post_url = post['post_url']
 
                 if len(post['trail']) > 1 and not self.reblog:
                     logging.info('Skip | Reblog post: {0} #{1} @{2} | {3}'.format(
@@ -152,6 +154,7 @@ class TumblrDownloader:
         last_timestamp = before_timestamp or int(time.time())
         page = 1
         postnum = 1
+        last_post_url = ''
         count = 0
         total = self.client.posts(blogname=blog_identifier)['total_posts']
         logging.info('Blog | {0} posts total'.format(total))
@@ -160,10 +163,11 @@ class TumblrDownloader:
             logging.info('Blog | Page {0} Post {1} Timestamp {2} ongoing'.format(page, postnum, last_timestamp))
 
             posts = self.client.posts(blogname=blog_identifier, before=last_timestamp+1)['posts']
-            if len(posts) == 0:
+            if len(posts) == 1 and last_post_url == posts[0]['post_url']:
                 break
 
             for post in posts:
+                last_post_url = post['post_url']
                 if 'trail' in post and len(post['trail']) > 1 and not self.reblog:
                     logging.info('Skip | Reblog post: {0} #{1} @{2} | {3}'.format(
                         post['post_url'].split('/')[-2], postnum, post['timestamp'], post['post_url']))
@@ -202,8 +206,9 @@ class TumblrDownloader:
 
         elif post['type'] == 'video':
             if names is None:
-                file_name = post['video_url'].split('/')[-1]
-                self._download_file(post['video_url'], os.path.join(path, file_name))
+                if 'video_url' in post:
+                    file_name = post['video_url'].split('/')[-1]
+                    self._download_file(post['video_url'], os.path.join(path, file_name))
             else:
                 file_name = names.get(blog_name, 'mp4')
                 if self._download_file(post['video_url'], os.path.join(path, file_name)):
