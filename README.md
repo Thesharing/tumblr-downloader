@@ -18,13 +18,15 @@ pip install -r requirements.txt
 
 Or install the requirements manually: 
 
-| Package Name                                   |
-| ---------------------------------------------- |
-| [pytumblr](https://github.com/tumblr/pytumblr) |
-| requests                                       |
-| pyyaml                                         |
-| beautifulsoup4                                 |
-| lxml                                           |
+| Package Name                                                 |
+| ------------------------------------------------------------ |
+| [git+https://github.com/tumblr/pytumblr.git](https://github.com/tumblr/pytumblr) |
+| requests                                                     |
+| pyyaml                                                       |
+| beautifulsoup4                                               |
+| lxml                                                         |
+
+To be noticed, the official [pytumblr](https://github.com/tumblr/pytumblr)  package may not be the latest version, so it's better to use `pip install git+https://github.com/tumblr/pytumblr.git` to download the latest version of pytumblr.
 
 ## Execution
 
@@ -39,7 +41,7 @@ Or install the requirements manually:
    > Newly registered consumers are rate limited to 1,000 requests per hour, and 5,000 requests per day. If your application requires more requests for either of these periods, please use the *'Request rate limit removal'* link on an app above.
 
 2. After you registration you will get a OAuth Consumer Key and a Secret Key. 
-3. Config the functions you need in main.py, currently three functions are provided:
+3. Config the functions you need in [main.py](https://github.com/Thesharing/tumblr-downloader/blob/master/main.py), currently three functions are provided:
 
 | Function Name                            | Explanation                                           |
 | ---------------------------------------- | ----------------------------------------------------- |
@@ -47,19 +49,27 @@ Or install the requirements manually:
 | download_following()                     | Download all the posts in the blogs you are following |
 | download_blog(`name or url of the blog`) | Download all the posts in the blog you specified      |
 
-- `download_blog`'s required parameter is the name or URL of the blog. Take [support](https://support.tumblr.com/) blog as an example, the blog name should be `support`, and the URL should be `support.tumblr.com`.
+- The required parameter of `download_blog` is the name or URL of the blog. Take the official [support](https://support.tumblr.com/) blog as an example, the blog name should be `support`, and the URL should be `support.tumblr.com`.
 
-- `download_likes` and `download_blogs` have an optional parameter `before_timestamp` which, if set, starts downloading from a certain (unix epoch) timestamp proceeding earlier.  If unset, everything is downloaded.
+- `download_blog` has two optional parameters: 
 
-- `download_likes` has another optional parameter: `use_native_filenames`.  When False (default), the downloaded files are named for the blog that posted the liked file.  When True, the raw / native filename is used.
+  - `before_timestamp` is a unix timestamp,  all posts posted before this timestamp will be downloaded from the newest to the oldest. If not specified (which is default), it will use present time as the parameter, which means all the posts will be downloaded. This parameter is useful when the script breaks down and you want to resume it.
+  - `max_count` is used to control the max count of downloaded posts in case it takes to much time to download one blog. If not specified, all the posts will be downloaded. 
 
-- `download_following` has some optional parameters:
+- `download_likes` has two optional parameters:
 
-  > `start_blog`, which you can use it to specify which blog to start. This is useful when the script breaks down and you want to resume it.
-  > `start_page` is the page number to start.
-  > `max_page` is the max page number to download in case it takes too much time
-downloading one blog. `max_page` cannot be larger than 50, since downloader cannot access 50 and more pages via tumblr API.
-  > When using the offset parameter the maximum limit on the offset is 1000. If you would like to get more results than that use either before or after.
+  - `before_timestamp` is described above.
+  - `rename` is used when you want to rename all the files as `blog-{no.}` . `True` is default option. If set false, it will use original post's name.
+
+- `download_following` has three optional parameters:
+
+  - `start_blog`, which you can use it to specify which blog to start. This is useful when the script breaks down and you want to resume it.
+
+  - `start_page` is the page number to start.
+
+  - `max_page` is the max page number to download in case it takes too much time downloading one blog. `max_page` cannot be larger than 50, since downloader cannot access 50 and more pages via tumblr API.
+
+    > When using the offset parameter the maximum limit on the offset is 1000. If you would like to get more results than that use either before or after.
 
 - Set the downloader to not download reblog posts by setting`downloader.reblog = False`.
 

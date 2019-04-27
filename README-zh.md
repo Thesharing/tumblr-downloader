@@ -18,17 +18,19 @@ pip install -r requirements.txt
 
 或者手动安装依赖项：
 
-| Package Name                                   |
-| ---------------------------------------------- |
-| [pytumblr](https://github.com/tumblr/pytumblr) |
-| requests                                       |
-| pyyaml                                         |
-| beautifulsoup4                                 |
-| lxml                                           |
+| Package Name                                 |
+| -------------------------------------------- |
+| `git+https://github.com/tumblr/pytumblr.git` |
+| requests                                     |
+| pyyaml                                       |
+| beautifulsoup4                               |
+| lxml                                         |
+
+值得注意的是，官方 [pytumblr](https://github.com/tumblr/pytumblr) 包可能没有更新代码，因此最好通过`pip install git+https://github.com/tumblr/pytumblr.git`来下载最新版本的pytumblr包。
 
 ## 运行
 
-> ~~可能~~需要代理下载Tumblr的帖文. 如果已经开启了代理还是无法正常运行，请尝试将代理设置为`全局模式`.
+> 需要代理下载Tumblr的帖文. 如果已经开启了代理还是无法正常运行，请尝试将代理设置为`全局模式`.
 
 1. 访问 https://www.tumblr.com/oauth/apps 注册应用程序，注册完成后会得到一个OAuth密钥. OAuth 2.0 是一种加密认证方式，可以用于API账号认证，通过OAuth 2.0可以访问Tumblr API进而下载帖文. （[了解更多关于OAuth 2.0的知识](http://www.ruanyifeng.com/blog/2014/05/oauth_2_0.html)）
 
@@ -52,10 +54,32 @@ pip install -r requirements.txt
 
   > When using the offset parameter the maximum limit on the offset is 1000. If you would like to get more results than that use either before or after.
 
-* `download_following` 有第三个可选参数：`start_blog`，可以用于指定从哪一个博客开始下载. 在脚本运行中断，想要继续下载进程的时候可以用到.
 
-- `download_blog` 的参数为Blog的URL或名称，以Support博客为例，在这里应当填入 `support` 或者 `support.tumblr.com`.
-- 如果不想下载转帖的帖文（即只下载原创帖文），可以设置`downloader.reblog = False`.
+- `download_blog` 的参数为Blog的URL或名称，以官方 [Support](https://support.tumblr.com/) 博客为例，在这里应当填入 `support` 或者 `support.tumblr.com`.
+
+- `download_blog`有两个可选参数：
+
+  - `before_timestamp`参数为[Unix时间戳](https://baike.baidu.com/item/unix%E6%97%B6%E9%97%B4%E6%88%B3)，所有在此时间戳之前的帖文都会被按照从新到旧的顺序下载下来。如果没有指定该参数（默认不指定），会以当前时间为节点进行下载，也就是说之前所有帖文都会被下载。如果指定该参数的话，在指定时间戳之前的所有帖文会被下载下来，当脚本运行中断，需要继续之前的下载时，可以指定为中断时程序所显示的时间戳。
+  - `max_count`：为了避免下载一个博客时间过长，可以指定每个博客下载帖文的最大数量。不指定的话会自动下载所有帖文。
+
+- `download_likes`有两个可选参数：
+
+  - `before_timestamp`参数同上。
+  - `rename`用于对下载的图片或者视频进行重命名，如果指定为`True`（默认值），所有文件会被重命名为`blog-{序号}`，如果指定为`False`，则会用帖文原始的名称来命名文件。
+
+- `download_following`有三个可选参数：
+
+  - `start_blog`：可以用于指定从哪一个博客开始下载. 在脚本运行中断，想要继续下载进程的时候可以用到。
+
+  - `start_page` ：可以用于指定开始下载的页码，可以用于断点续传。
+
+  - `max_page` 用于指定最大下载页数，避免下载单个博客时间过长. `max_page`不能大于50，这是由于Tumblr API进行了限制。
+
+    > When using the offset parameter the maximum limit on the offset is 1000. If you would like to get more results than that use either before or after.
+
+- 如果不想下载转帖的帖文（即只下载原创帖文），可以设置`downloader.reblog = False`。
+
+- 如果想避免重复下载，可以设置`download.redownload = False`。
 
 4. 运行 `python main.py` ，如果是第一次运行的话需要进行授权操作. 
    1. 首先输入 OAuth Consumer Key 和 Secret Key.

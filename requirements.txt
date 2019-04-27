@@ -1,4 +1,4 @@
-pytumblr
+git+https://github.com/tumblr/pytumblr.git
 requests
 pyyaml
 beautifulsoup4
