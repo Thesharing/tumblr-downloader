@@ -1,5 +1,6 @@
 import os
 import logging
+import time
 from math import ceil
 
 import yaml
@@ -15,7 +16,7 @@ MAX_RETRY = 20
 
 class TumblrDownloader:
 
-    def __init__(self, reblog: bool = True, logging_level: str = 'INFO'):
+    def __init__(self, reblog: bool = True, redownload: bool = False, logging_level: str = 'INFO'):
         """
         :param reblog: Download the reblog posts or not
         :param logging_level: the level of logging information
@@ -25,6 +26,7 @@ class TumblrDownloader:
                             level=getattr(logging, logging_level))
 
         self.reblog = reblog
+        self.redownload = redownload
 
         # Get Token from file or interactive console
         yaml_path = '.tumblr'
@@ -55,11 +57,11 @@ class TumblrDownloader:
         if not os.path.isdir(self.download_folder):
             os.mkdir(self.download_folder)
 
-    def download_likes(self, start_page=0, max_page=50):
+    def download_likes(self, before_timestamp=None, use_native_filenames=False):
         """
         Download all the posts you liked
-        :param start_page: optional, the page number to start, default is 0
-        :param max_page: optional, limit the max page number, in case it take too much time downloading one blog
+        :param before_timestamp: optional, get likes before a certain like-timestamp, instead of the most recent.
+        :param use_native_filenames: optional, use raw tumblr names, instead of blog-{filenum}, as filenames.
         """
 
         # Create likes folder
@@ -67,26 +69,41 @@ class TumblrDownloader:
         if not os.path.isdir(download_path):
             os.mkdir(download_path)
 
-        names = BlogName(download_path)
+        names = BlogName(download_path) if not use_native_filenames else None
+        last_timestamp = before_timestamp or int(time.time())
 
+        page = 1
+        postnum = 1
+        last_post_url = ''
         count = 0
         total = self.user_info['likes']
         logging.info('Likes | {0} ongoing'.format(total))
 
-        for page in range(start_page, min(ceil(total / 20), max_page)):
-            logging.info('Downloading page {0}'.format(page))
+        while True:
+            logging.info('Downloading page {0} before timestamp {1}'.format(page, last_timestamp))
 
-            for post in self.client.likes(limit=20, offset=page * 20)['liked_posts']:
+            likes = self.client.likes(limit=20, before=last_timestamp+1)['liked_posts']
+            if len(likes) == 1 and last_post_url == likes[0]['post_url']:
+                break
+
+            for post in likes:
+                last_post_url = post['post_url']
 
                 if len(post['trail']) > 1 and not self.reblog:
-                    logging.info('Skip | Reblog post: {0} | {1}'.format(post['blog_name'], post['post_url']))
+                    logging.info('Skip | Reblog post: {0} #{1} @{2} | {3}'.format(
+                        post['blog_name'], postnum, post['liked_timestamp'], post['post_url']))
 
                 else:
-                    logging.info('Likes | Start post {0} | {1}'.format(post['blog_name'], post['post_url']))
+                    logging.info('Likes | Start post {0} #{1} @{2} | {3}'.format(
+                        post['blog_name'], postnum, post['liked_timestamp'], post['post_url']))
 
                     self._download_post(post=post, path=download_path, names=names)
 
                     count += 1
+                last_timestamp = post['liked_timestamp']
+                postnum += 1
+
+            page += 1
 
         logging.info('Likes | {0} / {1} downloaded'.format(count, total))
 
@@ -122,12 +139,11 @@ class TumblrDownloader:
 
         logging.info('Following | {0} / {1} blogs downloaded'.format(count, total))
 
-    def download_blog(self, blog_identifier, start_page=0, max_page=50):
+    def download_blog(self, blog_identifier, before_timestamp=None):
         """
         Download all the posts in the blog you specified
         :param blog_identifier: name or url of the blog
-        :param start_page: page number to start
-        :param max_page: optional, limit the max page number, in case it take too much time downloading one blog
+        :param before_timestamp: optional, get likes before a certain like-timestamp, instead of the most recent.
         """
 
         # Create a blog folder
@@ -135,25 +151,37 @@ class TumblrDownloader:
         if not os.path.isdir(download_path):
             os.mkdir(download_path)
 
+        last_timestamp = before_timestamp or int(time.time())
+        page = 1
+        postnum = 1
+        last_post_url = ''
         count = 0
         total = self.client.posts(blogname=blog_identifier)['total_posts']
         logging.info('Blog | {0} posts total'.format(total))
 
-        for page in range(start_page, min(ceil(total / 20), max_page)):
-            logging.info('Blog | Page {0} ongoing'.format(page))
+        while True:
+            logging.info('Blog | Page {0} Post {1} Timestamp {2} ongoing'.format(page, postnum, last_timestamp))
 
-            for post in self.client.posts(blogname=blog_identifier, limit=20, offset=page * 20)['posts']:
+            posts = self.client.posts(blogname=blog_identifier, before=last_timestamp+1)['posts']
+            if len(posts) == 1 and last_post_url == posts[0]['post_url']:
+                break
 
+            for post in posts:
+                last_post_url = post['post_url']
                 if 'trail' in post and len(post['trail']) > 1 and not self.reblog:
-                    logging.info('Skip | Reblog post: {0} | {1}'.format(
-                        post['post_url'].split('/')[-2], post['post_url']))
+                    logging.info('Skip | Reblog post: {0} #{1} @{2} | {3}'.format(
+                        post['post_url'].split('/')[-2], postnum, post['timestamp'], post['post_url']))
 
                 else:
-                    logging.info('Blog | Start post {0} | {1}'.format(
-                        post['post_url'].split('/')[-2], post['post_url']))
+                    logging.info('Blog | Start post {0} #{1} @{2} | {3}'.format(
+                        post['post_url'].split('/')[-2], postnum, post['timestamp'], post['post_url']))
 
                     self._download_post(post, download_path)
                     count += 1
+
+                last_timestamp = post['timestamp']
+                postnum += 1
+            page += 1
 
         logging.info('Blog | {0} / {1} posts downloaded'.format(count, total))
 
@@ -178,8 +206,9 @@ class TumblrDownloader:
 
         elif post['type'] == 'video':
             if names is None:
-                file_name = post['video_url'].split('/')[-1]
-                self._download_file(post['video_url'], os.path.join(path, file_name))
+                if 'video_url' in post:
+                    file_name = post['video_url'].split('/')[-1]
+                    self._download_file(post['video_url'], os.path.join(path, file_name))
             else:
                 file_name = names.get(blog_name, 'mp4')
                 if self._download_file(post['video_url'], os.path.join(path, file_name)):
@@ -218,6 +247,9 @@ class TumblrDownloader:
         :param url: url of the target data
         :param path: name of the local file
         """
+        if os.path.exists(path) and not self.redownload:
+            return True
+
         while True:
             try:
                 r = requests.get(url, timeout=10)

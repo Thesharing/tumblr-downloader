@@ -13,7 +13,7 @@ Require Python >= 3.5, you can install the python from [official website](https:
 Install the requirement by: 
 
 ```bash
-pip install -i requirements.txt
+pip install -r requirements.txt
 ```
 
 Or install the requirements manually: 
@@ -22,7 +22,7 @@ Or install the requirements manually:
 | ---------------------------------------------- |
 | [pytumblr](https://github.com/tumblr/pytumblr) |
 | requests                                       |
-| yaml                                           |
+| pyyaml                                         |
 | beautifulsoup4                                 |
 | lxml                                           |
 
@@ -47,15 +47,23 @@ Or install the requirements manually:
 | download_following()                     | Download all the posts in the blogs you are following |
 | download_blog(`name or url of the blog`) | Download all the posts in the blog you specified      |
 
-- The functions has two optional parameters: `start_page` and `max_page`. `start_page` is the page number to start; `max_page` is the max page number to download in case it takes too much time downloading one blog. `max_page` cannot be larger than 50, since downloader cannot access 50 and more pages via tumblr API. 
+- `download_blog`'s required parameter is the name or URL of the blog. Take [support](https://support.tumblr.com/) blog as an example, the blog name should be `support`, and the URL should be `support.tumblr.com`.
 
+- `download_likes` and `download_blogs` have an optional parameter `before_timestamp` which, if set, starts downloading from a certain (unix epoch) timestamp proceeding earlier.  If unset, everything is downloaded.
+
+- `download_likes` has another optional parameter: `use_native_filenames`.  When False (default), the downloaded files are named for the blog that posted the liked file.  When True, the raw / native filename is used.
+
+- `download_following` has some optional parameters:
+
+  > `start_blog`, which you can use it to specify which blog to start. This is useful when the script breaks down and you want to resume it.
+  > `start_page` is the page number to start.
+  > `max_page` is the max page number to download in case it takes too much time
+downloading one blog. `max_page` cannot be larger than 50, since downloader cannot access 50 and more pages via tumblr API.
   > When using the offset parameter the maximum limit on the offset is 1000. If you would like to get more results than that use either before or after.
 
-- `download_following` has another optional parameters: `start_blog`, which you can use it to specify which blog to start. This is useful when the script breaks down and you want to resume it.
-
-- the parameter of `download_blog` is the name or URL of the blog. Take [support](https://support.tumblr.com/) blog as an example, the blog name should be `support`, and the URL should be `support.tumblr.com`.
-
 - Set the downloader to not download reblog posts by setting`downloader.reblog = False`.
+
+- Set the downloader to not download content that has already been downloaded, say from a previous run, by setting `downloader.redownload = False`.
 
 4. Run `python main.py` to start the first-time config, you will be redirected to a interactive console provided by pytumblr. 
    1. First input the OAuth Consumer Key and Secret Key you get before.
